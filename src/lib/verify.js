@@ -65,11 +65,24 @@ export function buildResumen({ frentes, consumosHormigon, certificado, panol, jo
     }
   }
 
+  // Cordón de hormigón estructural (no el de protección de caños)
+  const esCordonH = (o) => o.trabajo === 'cordon' && /armado|h°|hormig/i.test(o.label)
+
+  // m³ por operación. Para el cordón (medido en ml) se usa el coeficiente de
+  // sección; para el resto, m² × espesor.
   const operaciones = Object.values(opsMap)
-    .map((o) => ({ ...o, m3: m3Teorico(o, o.m2) }))
+    .map((o) => {
+      let m3 = m3Teorico(o, o.m2)
+      let material = o.material
+      if (m3 == null && esCordonH(o)) {
+        m3 = o.m2 * REGLAS.H21_M3_POR_ML_CORDON
+        material = material || 'H21'
+      }
+      return { ...o, material, m3 }
+    })
     .sort((a, b) => b.m2 - a.m2)
 
-  // ── 2. Hormigón teórico (rollup por material) ─────────────────────────
+  // ── 2. Hormigón teórico (rollup por material) — incluye el cordón ─────
   const teoricoPorMat = {}
   for (const o of operaciones) {
     if (o.material && o.m3) teoricoPorMat[o.material] = (teoricoPorMat[o.material] || 0) + o.m3
@@ -79,12 +92,8 @@ export function buildResumen({ frentes, consumosHormigon, certificado, panol, jo
   const suma = (pred) => operaciones.filter(pred).reduce((s, o) => s + o.m2, 0)
   const soladoM2 = suma((o) => o.trabajo === 'solado')
   const aceraM2 = suma((o) => o.trabajo === 'acera')
-  // Cordón de hormigón (estructural, no el de protección de caños)
-  const cordonMl = suma((o) => o.trabajo === 'cordon' && /armado|h°|hormig/i.test(o.label))
-
-  // Cordón aporta H21 teórico: ml × coeficiente
-  const h21Cordon = cordonMl * REGLAS.H21_M3_POR_ML_CORDON
-  if (h21Cordon > 0) teoricoPorMat['H21'] = (teoricoPorMat['H21'] || 0) + h21Cordon
+  const cordonMl = suma(esCordonH)
+  const h21Cordon = cordonMl * REGLAS.H21_M3_POR_ML_CORDON // solo para la nota
 
   // ── 3. Hormigón consumido (CONTROL, JO + período) ─────────────────────
   const hormigonJO = (consumosHormigon || []).filter(
