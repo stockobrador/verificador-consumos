@@ -93,6 +93,8 @@ export function buildResumen({ frentes, consumosHormigon, certificado, panol, jo
   const soladoM2 = suma((o) => o.trabajo === 'solado')
   const aceraM2 = suma((o) => o.trabajo === 'acera')
   const cordonMl = suma(esCordonH)
+  // Total de m² ejecutados del JO (columna M2 EJECUTADOS del EJECUTADO)
+  const m2EjecutadoTotal = frentes.reduce((s, f) => s + (f.m2 || 0), 0)
   const h21Cordon = cordonMl * REGLAS.H21_M3_POR_ML_CORDON // solo para la nota
 
   // ── 3. Hormigón consumido (CONTROL, JO + período) ─────────────────────
@@ -156,9 +158,9 @@ export function buildResumen({ frentes, consumosHormigon, certificado, panol, jo
     },
     {
       insumo: 'Volquete',
-      teorico: (soladoM2 + aceraM2) / REGLAS.VOLQUETE_CADA_M2,
+      teorico: m2EjecutadoTotal / REGLAS.VOLQUETE_CADA_M2,
       consumido: volquetes,
-      base: `${(soladoM2 + aceraM2).toFixed(0)} m² solado+acera`,
+      base: `${m2EjecutadoTotal.toFixed(0)} m² ejecutado`,
     },
   ].map((r) => ({ ...r, ...estadoDe(r.teorico, r.consumido) }))
 
