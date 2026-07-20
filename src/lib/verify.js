@@ -1,5 +1,6 @@
 import { mismasDirecciones, fechaEnRango } from './normalize.js'
 import { parseOperacion, m3Teorico, baldosaTipo } from './certOps.js'
+import { REGLAS, sumaPorNombre } from './reglas.js'
 
 const TOLERANCIA = 0.15 // ±15%
 
@@ -74,6 +75,17 @@ export function buildResumen({ frentes, consumosHormigon, certificado, panol, jo
     if (o.material && o.m3) teoricoPorMat[o.material] = (teoricoPorMat[o.material] || 0) + o.m3
   }
 
+  // Metrajes por tipo de trabajo (para las reglas de rendimiento)
+  const suma = (pred) => operaciones.filter(pred).reduce((s, o) => s + o.m2, 0)
+  const soladoM2 = suma((o) => o.trabajo === 'solado')
+  const aceraM2 = suma((o) => o.trabajo === 'acera')
+  // Cordón de hormigón (estructural, no el de protección de caños)
+  const cordonMl = suma((o) => o.trabajo === 'cordon' && /armado|h°|hormig/i.test(o.label))
+
+  // Cordón aporta H21 teórico: ml × coeficiente
+  const h21Cordon = cordonMl * REGLAS.H21_M3_POR_ML_CORDON
+  if (h21Cordon > 0) teoricoPorMat['H21'] = (teoricoPorMat['H21'] || 0) + h21Cordon
+
   // ── 3. Hormigón consumido (CONTROL, JO + período) ─────────────────────
   const hormigonJO = (consumosHormigon || []).filter(
     (c) => c.jo === jo && fechaEnRango(c.fecha, desde, hasta)
@@ -110,6 +122,36 @@ export function buildResumen({ frentes, consumosHormigon, certificado, panol, jo
       if (b) acum(baldCons, b.key, it.cantidad, { label: b.label })
     }
   }
+
+  // ── 4b. Reglas de rendimiento: consumo teórico vs real ────────────────
+  const baldosaM2 = soladoM2 // baldosas = solados ejecutados
+  const u = REGLAS.BALDOSA_UNIDAD_M2
+  const reglas = [
+    {
+      insumo: 'Arena (bolsón)',
+      teorico: (baldosaM2 / u) * REGLAS.ARENA_BOLSON_POR_UNIDAD,
+      consumido: sumaPorNombre(panolPorItem, /arena/),
+      base: `${baldosaM2.toFixed(0)} m² baldosa`,
+    },
+    {
+      insumo: 'Cemento (bolsa)',
+      teorico: (baldosaM2 / u) * REGLAS.CEMENTO_BOLSAS_POR_UNIDAD,
+      consumido: sumaPorNombre(panolPorItem, /cemento/),
+      base: `${baldosaM2.toFixed(0)} m² baldosa`,
+    },
+    {
+      insumo: 'Cal (bolsa)',
+      teorico: (baldosaM2 / u) * REGLAS.CAL_BOLSAS_POR_UNIDAD,
+      consumido: sumaPorNombre(panolPorItem, /\bcal\b/),
+      base: `${baldosaM2.toFixed(0)} m² baldosa`,
+    },
+    {
+      insumo: 'Volquete',
+      teorico: (soladoM2 + aceraM2) / REGLAS.VOLQUETE_CADA_M2,
+      consumido: volquetes,
+      base: `${(soladoM2 + aceraM2).toFixed(0)} m² solado+acera`,
+    },
+  ].map((r) => ({ ...r, ...estadoDe(r.teorico, r.consumido) }))
 
   // ── 5. Comparación de baldosas por subtipo ────────────────────────────
   const baldKeys = [...new Set([...Object.keys(baldCert), ...Object.keys(baldCons)])]
@@ -150,7 +192,9 @@ export function buildResumen({ frentes, consumosHormigon, certificado, panol, jo
     },
     operaciones,
     hormigon,
+    reglas,
     baldosas,
+    cordon: { ml: cordonMl, h21m3: h21Cordon, coef: REGLAS.H21_M3_POR_ML_CORDON },
     extras: { volquetes, asfalto },
     panolTotales,
     totalRetirado,

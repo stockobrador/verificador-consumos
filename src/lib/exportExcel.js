@@ -58,6 +58,24 @@ export function exportarResumen(res) {
     'Hormigón'
   )
 
+  // Hoja 3b — Reglas de rendimiento
+  if (res.reglas) {
+    XLSX.utils.book_append_sheet(
+      wb,
+      XLSX.utils.json_to_sheet(
+        res.reglas.map((r) => ({
+          Insumo: r.insumo,
+          Teórico: r1(r.teorico),
+          Consumido: r1(r.consumido),
+          'Δ %': r.deltaPct == null ? '' : Math.round(r.deltaPct),
+          Estado: ESTADO_TXT[r.estado] || r.estado,
+          Base: r.base,
+        }))
+      ),
+      'Reglas rendimiento'
+    )
+  }
+
   // Hoja 4 — Baldosas por subtipo
   XLSX.utils.book_append_sheet(
     wb,

@@ -167,6 +167,7 @@ tr.row-info td { background: #eff6ff; }
 .badge.muted { background: #f3f4f6; color: #9ca3af; }
 
 .muted { color: #9ca3af; font-style: italic; font-size: 0.88em; }
+.muted-cell { color: #9ca3af; font-size: 0.82em; }
 
 .nota { font-size: 0.8em; color: #6b7280; margin: 6px 2px 20px; font-style: italic; }
 

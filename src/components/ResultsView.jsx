@@ -20,7 +20,7 @@ const n = (v, d = 1) =>
 
 export default function ResultsView({ resultado }) {
   if (!resultado) return null
-  const { resumen, operaciones, hormigon, baldosas, extras, panolTotales, totalRetirado, frentes, periodo } = resultado
+  const { resumen, operaciones, hormigon, reglas, baldosas, cordon, extras, panolTotales, totalRetirado, frentes, periodo } = resultado
 
   const periodoTxt =
     (periodo.desde ? periodo.desde.toLocaleDateString('es-AR') : 'inicio') +
@@ -87,6 +87,33 @@ export default function ResultsView({ resultado }) {
       <p className="nota">
         m³ teórico = m² del certificado × espesor. La diferencia (Δ) es el sobreconsumo/faltante real.
         El consumo se cuenta solo dentro del período elegido.
+        {cordon && cordon.ml > 0 && (
+          <> Incluye {n(cordon.h21m3)} m³ de H21 estimados por {n(cordon.ml)} ml de cordón ({cordon.coef} m³/ml).</>
+        )}
+      </p>
+
+      {/* ── Reglas de rendimiento ── */}
+      <h3 className="sec-title">Reglas de rendimiento — teórico vs consumido</h3>
+      <table className="grupos">
+        <thead>
+          <tr><th>Insumo</th><th>Teórico</th><th>Consumido</th><th>Δ</th><th>Estado</th><th>Base</th></tr>
+        </thead>
+        <tbody>
+          {reglas.map((r) => (
+            <tr key={r.insumo} className={`row-${(ESTADO[r.estado] || {}).cls || ''}`}>
+              <td>{r.insumo}</td>
+              <td>{n(r.teorico)}</td>
+              <td>{r.consumido ? n(r.consumido) : '—'}</td>
+              <td>{r.deltaPct == null ? '—' : `${r.deltaPct > 0 ? '+' : ''}${r.deltaPct.toFixed(0)}%`}</td>
+              <td><Badge estado={r.estado} /></td>
+              <td className="muted-cell">{r.base}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p className="nota">
+        Cada 25 m² de baldosa → 1 bolsón arena, 6 bolsas cemento, 6 bolsas cal.
+        Cada 25 m² de solado/acera → 1 volquete. Arena/cemento/cal salen de Supabase (por frente); volquetes del Excel de control.
       </p>
 
       {/* ── Baldosas por subtipo ── */}
