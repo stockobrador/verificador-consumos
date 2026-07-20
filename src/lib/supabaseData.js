@@ -19,6 +19,7 @@ function ymd(date) {
 //     porRemito: { remito_id: {obs, tipo, fecha, items:[{nombre,unidad,cantidad}]} }
 //   }
 export async function fetchConsumosPanol(jo, desde, hasta) {
+  if (!supabase) throw new Error('Supabase no está configurado (faltan variables de entorno)')
   if (!jo) throw new Error('Falta el jefe de obra')
 
   // 1. Remitos del jefe en el rango (RETIRO y DEVOLUCION)
