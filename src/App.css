@@ -101,6 +101,19 @@ code { background: rgba(0,0,0,0.06); padding: 1px 6px; border-radius: 4px; font-
 .results-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 16px; }
 .results-head h2 { margin: 0; font-size: 1.3em; }
 .periodo { color: #6b7280; font-size: 0.9em; }
+.btn-export {
+  margin-left: auto;
+  background: #16a34a;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.88em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-export:hover { background: #15803d; }
 
 .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
 .card {

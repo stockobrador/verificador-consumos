@@ -1,4 +1,5 @@
 // Resumen agregado: certificado por tipo de operación vs consumo del jefe de obra.
+import { exportarResumen } from '../lib/exportExcel.js'
 
 const ESTADO = {
   ok: { txt: 'OK', cls: 'ok' },
@@ -19,7 +20,7 @@ const n = (v, d = 1) =>
 
 export default function ResultsView({ resultado }) {
   if (!resultado) return null
-  const { resumen, operaciones, hormigon, baldosas, extras, panolTotales, frentes, periodo } = resultado
+  const { resumen, operaciones, hormigon, baldosas, extras, panolTotales, totalRetirado, frentes, periodo } = resultado
 
   const periodoTxt =
     (periodo.desde ? periodo.desde.toLocaleDateString('es-AR') : 'inicio') +
@@ -31,6 +32,9 @@ export default function ResultsView({ resultado }) {
       <div className="results-head">
         <h2>Resumen — {resultado.jo}</h2>
         <span className="periodo">{periodoTxt}</span>
+        <button className="btn-export" onClick={() => exportarResumen(resultado)}>
+          ⬇ Exportar a Excel
+        </button>
       </div>
 
       <div className="cards">
@@ -123,7 +127,31 @@ export default function ResultsView({ resultado }) {
         </div>
       )}
 
-      {/* ── Pañol detalle ── */}
+      {/* ── Total retirado en el período (todo el JO) ── */}
+      {totalRetirado && totalRetirado.length > 0 && (
+        <>
+          <h3 className="sec-title">Total retirado en el período (todo el JO, todos los frentes)</h3>
+          <table className="grupos">
+            <thead>
+              <tr><th>Item</th><th>Unidad</th><th>Retirado</th><th>Devuelto</th><th>Neto</th></tr>
+            </thead>
+            <tbody>
+              {totalRetirado.map((x, i) => (
+                <tr key={i}>
+                  <td>{x.nombre}</td>
+                  <td>{x.unidad}</td>
+                  <td>{n(x.retiro)}</td>
+                  <td>{x.devuelto ? n(x.devuelto) : '—'}</td>
+                  <td>{n(x.neto)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="nota">Sale de Supabase: todo lo que retiró el JO entre las fechas, sin filtrar por frente.</p>
+        </>
+      )}
+
+      {/* ── Pañol detalle (solo frentes matcheados) ── */}
       {panolTotales.length > 0 && (
         <details className="panol-detalle">
           <summary>Consumo de pañol de esos frentes (Supabase) — {panolTotales.length} items</summary>

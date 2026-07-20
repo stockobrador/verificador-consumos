@@ -131,6 +131,18 @@ export function buildResumen({ frentes, consumosHormigon, certificado, panol, jo
     .filter((x) => Math.abs(x.neto) > 0.001)
     .sort((a, b) => b.neto - a.neto)
 
+  // ── Total retirado en el período (TODO el JO, sin filtrar por frente) ──
+  const totalRetirado = Object.entries(panol?.porItem || {})
+    .map(([nombre, v]) => ({
+      nombre,
+      unidad: v.unidad,
+      retiro: v.retiro || 0,
+      devuelto: v.devol || 0,
+      neto: v.neto || 0,
+    }))
+    .filter((x) => Math.abs(x.retiro) > 0.001 || Math.abs(x.devuelto) > 0.001)
+    .sort((a, b) => b.neto - a.neto)
+
   return {
     jo,
     periodo: { desde, hasta },
@@ -145,6 +157,7 @@ export function buildResumen({ frentes, consumosHormigon, certificado, panol, jo
     baldosas,
     extras: { volquetes, asfalto },
     panolTotales,
+    totalRetirado,
     frentes: frentes.map((f) => {
       const texto = `${f.calle} ${f.altura ?? ''}`.trim()
       return {
