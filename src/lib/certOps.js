@@ -11,13 +11,11 @@ import { norm } from './normalize.js'
 export function parseOperacion(desc) {
   const t = norm(desc)
 
-  // Material de hormigón (requiere "h" seguido del número; evita agarrar "15cm")
-  let material = null
-  if (/h\s*-?\s*8\b/.test(t)) material = 'H8'
-  else if (/h\s*-?\s*15\b/.test(t)) material = 'H15'
-  else if (/h\s*-?\s*17\b/.test(t)) material = 'H17'
-  else if (/h\s*-?\s*21\b/.test(t)) material = 'H21'
-  else if (/h\s*-?\s*30\b/.test(t)) material = 'H30'
+  // Material de hormigón: detecta CUALQUIER "H<número>" (H8, H17, H21, H25, H30…)
+  // de forma dinámica, para no depender de una lista fija. Requiere la "h"
+  // pegada al número (con ° o guion opcional) para no confundir con el espesor.
+  const matMat = t.match(/\bh\s*°?\s*-?\s*(\d{1,3})\b/)
+  const material = matMat ? 'H' + matMat[1] : null
 
   // Espesor: "de 8 cm", "de 12cm", "de 13cm"
   const esp = t.match(/de\s*(\d{1,2})\s*cm/)
