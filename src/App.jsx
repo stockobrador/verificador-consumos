@@ -11,7 +11,7 @@ import {
   jefesDeObra,
 } from './lib/parseExcel.js'
 import { fetchConsumosPanol } from './lib/supabaseData.js'
-import { buildVerificacion } from './lib/verify.js'
+import { buildResumen } from './lib/verify.js'
 import { inputDateToJS } from './lib/normalize.js'
 import './App.css'
 
@@ -78,7 +78,7 @@ export default function App() {
         return
       }
 
-      const res = buildVerificacion({
+      const res = buildResumen({
         frentes: frentesJO,
         consumosHormigon: consumos || [],
         certificado,
