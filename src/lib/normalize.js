@@ -35,23 +35,38 @@ export function parseDireccion(texto) {
   }
 }
 
-// ¿Dos direcciones son el mismo frente?
-// Calle: una debe contener a la otra (primeras palabras). Altura: exacta o por proximidad.
+// Palabras significativas de un nombre de calle (sin puntuación, sin palabras cortas).
+// "CABEZON, JOSE LEON" -> ["cabezon","jose","leon"] ; "SEGUROLA AV." -> ["segurola"]
+const STOPWORDS = new Set(['av', 'ave', 'avda', 'avenida', 'de', 'del', 'la', 'las', 'los', 'el'])
+function calleTokens(calle) {
+  return norm(calle)
+    .replace(/[^a-z0-9 ]/g, ' ')
+    .split(/\s+/)
+    .filter((w) => w.length >= 3 && !STOPWORDS.has(w))
+}
+
+// ¿Los nombres de calle coinciden? Compara por palabras (tolera comas, nombres
+// invertidos y palabras de más): matchea si ≥60% de las palabras de la más corta
+// están en la otra.
+function callesCoinciden(a, b) {
+  const ta = calleTokens(a)
+  const tb = calleTokens(b)
+  if (!ta.length || !tb.length) return false
+  const setB = new Set(tb)
+  const comunes = ta.filter((w) => setB.has(w)).length
+  return comunes / Math.min(ta.length, tb.length) >= 0.6
+}
+
+// ¿Dos direcciones son el mismo frente? Calle por palabras + altura por proximidad.
+// Tolera rangos de altura ("3540/42") porque parseDireccion toma el primer número.
 export function mismasDirecciones(a, b, toleranciaAltura = 50) {
   const da = parseDireccion(a)
   const db = parseDireccion(b)
 
   if (!da.calle || !db.calle) return false
+  if (!callesCoinciden(da.calle, db.calle)) return false
 
-  // Comparar calle por prefijo significativo (primeras 6 letras del nombre)
-  const claveA = da.calle.replace(/[^a-z0-9 ]/g, '').slice(0, 8)
-  const claveB = db.calle.replace(/[^a-z0-9 ]/g, '').slice(0, 8)
-  const calleCoincide =
-    claveA && claveB && (da.calle.includes(claveB) || db.calle.includes(claveA))
-
-  if (!calleCoincide) return false
-
-  // Altura: si alguna no tiene, aceptar solo por calle. Si ambas tienen, comparar proximidad.
+  // Altura: si alguna no tiene, aceptar solo por calle. Si ambas tienen, proximidad.
   if (da.altura == null || db.altura == null) return true
   return Math.abs(da.altura - db.altura) <= toleranciaAltura
 }
