@@ -11,9 +11,9 @@ export const REGLAS = {
   // Cada X m² de solado o acera ejecutada => 1 volquete
   VOLQUETE_CADA_M2: 25,
 
-  // Estimado de hormigón H21 por metro lineal de cordón (sección ~0,15×0,40).
-  // Ajustable según el cordón real.
-  H21_M3_POR_ML_CORDON: 0.06,
+  // Hormigón H21 por metro lineal de cordón. Sección real 15 cm alto × 12 cm ancho
+  // = 0,15 × 0,12 = 0,018 m²/ml.
+  H21_M3_POR_ML_CORDON: 0.018,
 }
 
 // Suma neto de los items de pañol (por nombre) que matchean un patrón.
