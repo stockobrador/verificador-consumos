@@ -113,8 +113,13 @@ export function exportarResumen(res) {
     XLSX.utils.json_to_sheet(
       res.frentes.map((f) => ({
         Frente: f.texto,
-        'M²': r1(f.m2),
-        'En certificado': f.certificado ? 'Sí' : 'No',
+        'M² ejec': r1(f.m2),
+        'Baldosa cert m²': r1(f.baldosaCert),
+        'Baldosa cons m²': r1(f.baldosaCons),
+        'Estado baldosa': ESTADO_TXT[f.baldEstado] || f.baldEstado,
+        'Hormigón teór m³': r1(f.hormTeo),
+        'Hormigón cons m³': r1(f.hormCons),
+        'Estado hormigón': ESTADO_TXT[f.hormEstado] || f.hormEstado,
       }))
     ),
     'Frentes'

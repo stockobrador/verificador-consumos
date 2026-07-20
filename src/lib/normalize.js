@@ -85,6 +85,36 @@ export function mismasDirecciones(a, b, toleranciaAltura = 50) {
   return Math.abs(da.altura - db.altura) <= toleranciaAltura
 }
 
+// Reparte una cantidad entre las direcciones listadas en un campo DIRECCION.
+// Un consumo de hormigón/volquete suele cubrir varios frentes:
+//   "CAMPANA 3751 (2)/CESAR DIAZ 3176 (2)"  -> 2 y 2  (usa los (n))
+//   "CONDARCO 2204 \n CHIMBORAZO 2282"       -> mitad y mitad (sin pesos)
+//   "RICARDO GUTIERREZ 3587/3637/3645"       -> 1 sola dirección (alturas del mismo frente)
+// Devuelve [{ dir, cant }] cuya suma = cantidad.
+export function repartirDireccion(direccionRaw, cantidad) {
+  const partes = String(direccionRaw || '')
+    .split(/[\n/]+/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+
+  // Solo cuentan como direcciones separadas las que tienen nombre de calle
+  // (letras). Los segmentos que son solo números son alturas alternativas.
+  const segmentos = partes.filter((s) => /[a-zA-Z]/.test(s))
+  if (segmentos.length <= 1) return [{ dir: direccionRaw, cant: cantidad }]
+
+  const pesos = segmentos.map((s) => {
+    const m = s.match(/\((\d+(?:[.,]\d+)?)\)/)
+    return m ? parseFloat(m[1].replace(',', '.')) : null
+  })
+  const conPeso = pesos.every((p) => p != null) && pesos.some((p) => p > 0)
+  const sumaPesos = pesos.reduce((a, p) => a + (p || 0), 0)
+
+  return segmentos.map((s, i) => ({
+    dir: s,
+    cant: conPeso && sumaPesos > 0 ? cantidad * (pesos[i] / sumaPesos) : cantidad / segmentos.length,
+  }))
+}
+
 // Clave canónica de un frente para agrupar: "calle|altura"
 export function claveFrente(texto) {
   const { calle, altura } = parseDireccion(texto)

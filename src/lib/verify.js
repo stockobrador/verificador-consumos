@@ -1,4 +1,4 @@
-import { mismasDirecciones, fechaEnRango } from './normalize.js'
+import { mismasDirecciones, fechaEnRango, repartirDireccion } from './normalize.js'
 import { parseOperacion, m3Teorico, baldosaTipo } from './certOps.js'
 import { REGLAS, sumaPorNombre } from './reglas.js'
 
@@ -220,10 +220,51 @@ export function buildResumen({ frentes, consumosHormigon, certificado, panol, jo
     totalRetirado,
     frentes: frentes.map((f) => {
       const texto = `${f.calle} ${f.altura ?? ''}`.trim()
+
+      // Certificado de este frente: baldosa m² + hormigón teórico m³
+      let baldosaCert = 0
+      let hormTeo = 0
+      for (const row of certificado) {
+        if (!mismasDirecciones(row.ubicacion, texto)) continue
+        const op = parseOperacion(row.descripcion)
+        if (op.trabajo === 'solado') baldosaCert += row.cantidad
+        let m3 = m3Teorico(op, row.cantidad)
+        if (m3 == null && esCordonH({ trabajo: op.trabajo, label: row.descripcion })) {
+          m3 = row.cantidad * REGLAS.H21_M3_POR_ML_CORDON
+        }
+        if (m3) hormTeo += m3
+      }
+
+      // Consumo de baldosa de este frente (Supabase, obs)
+      let baldosaCons = 0
+      for (const r of remitos) {
+        if (!mismasDirecciones(r.obs, texto)) continue
+        for (const it of r.items) if (baldosaTipo(it.nombre)) baldosaCons += it.cantidad
+      }
+
+      // Consumo de hormigón de este frente (CONTROL, dirección, período).
+      // Un consumo que cubre varias direcciones se reparte, para no duplicar.
+      let hormCons = 0
+      for (const c of hormigonJO) {
+        if (!materialHormigon(c.tipo)) continue
+        for (const seg of repartirDireccion(c.direccion, c.cantidad)) {
+          if (mismasDirecciones(seg.dir, texto)) {
+            hormCons += seg.cant
+            break
+          }
+        }
+      }
+
       return {
         texto: texto.toUpperCase(),
         m2: f.m2,
-        certificado: [...frentesCertificados].some((u) => mismasDirecciones(u, texto)),
+        certificado: baldosaCert > 0 || hormTeo > 0,
+        baldosaCert,
+        baldosaCons,
+        baldEstado: estadoDe(baldosaCert, baldosaCons).estado,
+        hormTeo,
+        hormCons,
+        hormEstado: estadoDe(hormTeo, hormCons).estado,
       }
     }),
   }

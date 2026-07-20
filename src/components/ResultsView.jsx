@@ -196,15 +196,37 @@ export default function ResultsView({ resultado }) {
         </details>
       )}
 
-      {/* ── Frentes ── */}
-      <details className="panol-detalle">
-        <summary>Frentes del JO ({frentes.length}) — matcheo con certificado</summary>
-        <ul className="sin-list">
-          {frentes.map((f, i) => (
-            <li key={i}>{f.certificado ? '✓' : '✗'} {f.texto} · M² {n(f.m2)}</li>
-          ))}
-        </ul>
-      </details>
+      {/* ── Consumo por frente vs certificado ── */}
+      <h3 className="sec-title">Consumo por frente vs certificado</h3>
+      <div className="tabla-scroll">
+        <table className="grupos">
+          <thead>
+            <tr>
+              <th>Frente</th><th>M² ejec</th>
+              <th>Baldosa cert m²</th><th>Baldosa cons m²</th><th></th>
+              <th>Hormigón teór m³</th><th>Hormigón cons m³</th><th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {frentes.map((f, i) => (
+              <tr key={i}>
+                <td>{f.texto}</td>
+                <td>{n(f.m2)}</td>
+                <td>{f.baldosaCert ? n(f.baldosaCert) : '—'}</td>
+                <td>{f.baldosaCons ? n(f.baldosaCons) : '—'}</td>
+                <td><Badge estado={f.baldEstado} /></td>
+                <td>{f.hormTeo ? n(f.hormTeo) : '—'}</td>
+                <td>{f.hormCons ? n(f.hormCons) : '—'}</td>
+                <td><Badge estado={f.hormEstado} /></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="nota">
+        Por frente: baldosa (certificado vs Supabase por obs) y hormigón (m³ teórico del certificado
+        vs consumido del Excel de control por dirección). "—" = ese frente no tiene ese ítem.
+      </p>
     </section>
   )
 }
