@@ -19,7 +19,7 @@ const n = (v, d = 1) =>
 
 export default function ResultsView({ resultado }) {
   if (!resultado) return null
-  const { resumen, operaciones, hormigon, solados, extras, panolTotales, frentes, periodo } = resultado
+  const { resumen, operaciones, hormigon, baldosas, extras, panolTotales, frentes, periodo } = resultado
 
   const periodoTxt =
     (periodo.desde ? periodo.desde.toLocaleDateString('es-AR') : 'inicio') +
@@ -85,21 +85,30 @@ export default function ResultsView({ resultado }) {
         El consumo se cuenta solo dentro del período elegido.
       </p>
 
-      {/* ── Solados / baldosas ── */}
-      {(solados.certificadoM2 > 0 || solados.consumidoM2 > 0) && (
+      {/* ── Baldosas por subtipo ── */}
+      {baldosas.length > 0 && (
         <>
-          <h3 className="sec-title">Solados / baldosas — certificado vs consumido (Supabase)</h3>
+          <h3 className="sec-title">Baldosas — certificado vs consumido (Supabase, por frente)</h3>
           <table className="grupos">
-            <thead><tr><th>Certificado m²</th><th>Consumido m²</th><th>Δ</th><th>Estado</th></tr></thead>
+            <thead>
+              <tr><th>Tipo de baldosa</th><th>Certificado m²</th><th>Consumido m²</th><th>Δ</th><th>Estado</th></tr>
+            </thead>
             <tbody>
-              <tr className={`row-${(ESTADO[solados.estado] || {}).cls || ''}`}>
-                <td>{n(solados.certificadoM2)}</td>
-                <td>{n(solados.consumidoM2)}</td>
-                <td>{solados.deltaPct == null ? '—' : `${solados.deltaPct > 0 ? '+' : ''}${solados.deltaPct.toFixed(0)}%`}</td>
-                <td><Badge estado={solados.estado} /></td>
-              </tr>
+              {baldosas.map((b) => (
+                <tr key={b.key} className={`row-${(ESTADO[b.estado] || {}).cls || ''}`}>
+                  <td>{b.label}</td>
+                  <td>{b.certificadoM2 ? n(b.certificadoM2) : '—'}</td>
+                  <td>{b.consumidoM2 ? n(b.consumidoM2) : '—'}</td>
+                  <td>{b.deltaPct == null ? '—' : `${b.deltaPct > 0 ? '+' : ''}${b.deltaPct.toFixed(0)}%`}</td>
+                  <td><Badge estado={b.estado} /></td>
+                </tr>
+              ))}
             </tbody>
           </table>
+          <p className="nota">
+            El consumo de baldosas sale de Supabase, tomando solo los remitos cuya observación
+            (calle + altura) matchea un frente del JO.
+          </p>
         </>
       )}
 
@@ -117,12 +126,12 @@ export default function ResultsView({ resultado }) {
       {/* ── Pañol detalle ── */}
       {panolTotales.length > 0 && (
         <details className="panol-detalle">
-          <summary>Consumo de pañol (Supabase) — {panolTotales.length} items</summary>
+          <summary>Consumo de pañol de esos frentes (Supabase) — {panolTotales.length} items</summary>
           <table className="grupos">
-            <thead><tr><th>Item</th><th>Unidad</th><th>Neto</th></tr></thead>
+            <thead><tr><th>Item</th><th>Neto consumido</th></tr></thead>
             <tbody>
               {panolTotales.map((x, i) => (
-                <tr key={i}><td>{x.nombre}</td><td>{x.unidad}</td><td>{n(x.neto)}</td></tr>
+                <tr key={i}><td>{x.nombre}</td><td>{n(x.neto)}</td></tr>
               ))}
             </tbody>
           </table>

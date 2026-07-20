@@ -61,3 +61,25 @@ export function m3Teorico({ esConcreto, espesor }, m2) {
   if (!esConcreto || !espesor) return null
   return m2 * (espesor / 100)
 }
+
+// Clasifica una baldosa/solado en un subtipo común, usable tanto para las
+// descripciones del certificado ("Solados Mosaico 40x40 gris en panes") como
+// para los items de Supabase ("BALDOSA 40X40 64 PANES GRISES (H-15)").
+// 👉 Ajustá las reglas acá si un subtipo no matchea bien.
+export function baldosaTipo(texto) {
+  const t = norm(texto)
+  if (!/baldosa|mosaico|solado|baldoson|panes/.test(t)) return null
+
+  if (t.includes('tactil')) return { key: 'BALD_TACTIL', label: 'Baldosa táctil' }
+  if (t.includes('60x40') || t.includes('60 x 40'))
+    return { key: 'BALD_60', label: 'Baldosa 60x40' }
+  if (t.includes('20x20')) return { key: 'BALD_20', label: 'Baldosa 20x20' }
+  if (t.includes('30x30')) return { key: 'BALD_30', label: 'Baldosa 30x30' }
+
+  // 40x40 / mosaico en panes: separar gris de color
+  if (/gris/.test(t)) return { key: 'BALD_40_GRIS', label: 'Baldosa 40x40 gris (panes)' }
+  if (/color|roja|rojo|amarill|negra|negro|granitic|calcarea/.test(t))
+    return { key: 'BALD_40_COLOR', label: 'Baldosa 40x40 color (panes)' }
+
+  return { key: 'BALD_OTRO', label: 'Baldosa (otra)' }
+}
