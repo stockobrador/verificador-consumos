@@ -1,0 +1,77 @@
+═══════════════════════════════════════════════════════════════════
+  🚀 PASOS RÁPIDOS: GitHub + Cloudflare Pages
+═══════════════════════════════════════════════════════════════════
+
+✅ GIT JA ESTÁ INICIALIZADO CON COMMIT INICIAL
+
+═══════════════════════════════════════════════════════════════════
+PASO 1: CREAR REPO EN GITHUB
+═══════════════════════════════════════════════════════════════════
+
+1. Ve a: https://github.com/new
+2. Nombre del repo: verificador-consumos
+3. Visibility: Public
+4. NO marques "Initialize with README" (ya tenemos commits)
+5. Click: "Create repository"
+
+═══════════════════════════════════════════════════════════════════
+PASO 2: PUSHEAR CÓDIGO
+═══════════════════════════════════════════════════════════════════
+
+Abre Terminal en:
+  Workspace/Proyectos/VerificadorConsumos
+
+Ejecuta:
+
+  git remote add origin https://github.com/TU_USUARIO/verificador-consumos.git
+  git branch -M main
+  git push -u origin main
+
+(Reemplaza TU_USUARIO con tu usuario de GitHub)
+Te pedirá token: genera uno aquí → https://github.com/settings/tokens
+
+═══════════════════════════════════════════════════════════════════
+PASO 3: CONECTAR CLOUDFLARE PAGES
+═══════════════════════════════════════════════════════════════════
+
+1. Ve a: https://dash.cloudflare.com
+2. Lado izquierdo: Click "Pages"
+3. Click: "Connect to Git"
+4. Selecciona GitHub → Autoriza
+5. Elige el repo "verificador-consumos"
+
+BUILD SETTINGS:
+  Project name: verificador-consumos
+  Production branch: main
+  Build command: npm run build
+  Build output directory: dist
+
+6. Click: "Save and Deploy"
+
+Espera 2-5 minutos... ✅ ¡LISTO!
+
+═══════════════════════════════════════════════════════════════════
+TU WEB EN VIVO
+═══════════════════════════════════════════════════════════════════
+
+URL: https://verificador-consumos.pages.dev
+
+(O tu dominio si lo conectas en Cloudflare)
+
+═══════════════════════════════════════════════════════════════════
+ACTUALIZAR EN EL FUTURO
+═══════════════════════════════════════════════════════════════════
+
+$ git add .
+$ git commit -m "tu mensaje"
+$ git push origin main
+
+Cloudflare se actualiza automáticamente en 2-5 minutos
+
+═══════════════════════════════════════════════════════════════════
+PROBLEMAS?
+═══════════════════════════════════════════════════════════════════
+
+Ver: DEPLOY.md (archivo con guía completa y troubleshooting)
+
+═══════════════════════════════════════════════════════════════════
