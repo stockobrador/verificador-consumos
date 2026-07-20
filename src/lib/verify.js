@@ -135,6 +135,11 @@ export function buildResumen({ frentes, consumosHormigon, certificado, panol, jo
   }
 
   // ── 4b. Reglas de rendimiento: consumo teórico vs real ────────────────
+  // "consumido" = matcheado por frente (obs). "retirado" = total del período
+  // del JO (sin filtrar por frente), más completo y sin falsos "Falta".
+  const netoPeriodo = {}
+  for (const [nombre, v] of Object.entries(panol?.porItem || {})) netoPeriodo[nombre] = v.neto
+
   const baldosaM2 = soladoM2 // baldosas = solados ejecutados
   const u = REGLAS.BALDOSA_UNIDAD_M2
   const reglas = [
@@ -142,27 +147,31 @@ export function buildResumen({ frentes, consumosHormigon, certificado, panol, jo
       insumo: 'Arena (bolsón)',
       teorico: (baldosaM2 / u) * REGLAS.ARENA_BOLSON_POR_UNIDAD,
       consumido: sumaPorNombre(panolPorItem, /arena/),
+      retirado: sumaPorNombre(netoPeriodo, /arena/),
       base: `${baldosaM2.toFixed(0)} m² baldosa`,
     },
     {
       insumo: 'Cemento (bolsa)',
       teorico: (baldosaM2 / u) * REGLAS.CEMENTO_BOLSAS_POR_UNIDAD,
       consumido: sumaPorNombre(panolPorItem, /cemento/),
+      retirado: sumaPorNombre(netoPeriodo, /cemento/),
       base: `${baldosaM2.toFixed(0)} m² baldosa`,
     },
     {
       insumo: 'Cal (bolsa)',
       teorico: (baldosaM2 / u) * REGLAS.CAL_BOLSAS_POR_UNIDAD,
       consumido: sumaPorNombre(panolPorItem, /\bcal\b/),
+      retirado: sumaPorNombre(netoPeriodo, /\bcal\b/),
       base: `${baldosaM2.toFixed(0)} m² baldosa`,
     },
     {
       insumo: 'Volquete',
       teorico: m2EjecutadoTotal / REGLAS.VOLQUETE_CADA_M2,
       consumido: volquetes,
+      retirado: volquetes, // los volquetes salen del Excel de control (ya es total del período)
       base: `${m2EjecutadoTotal.toFixed(0)} m² ejecutado`,
     },
-  ].map((r) => ({ ...r, ...estadoDe(r.teorico, r.consumido) }))
+  ].map((r) => ({ ...r, ...estadoDe(r.teorico, r.retirado) }))
 
   // ── 5. Comparación de baldosas por subtipo ────────────────────────────
   const baldKeys = [...new Set([...Object.keys(baldCert), ...Object.keys(baldCons)])]

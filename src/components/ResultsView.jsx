@@ -96,7 +96,7 @@ export default function ResultsView({ resultado }) {
       <h3 className="sec-title">Reglas de rendimiento — teórico vs consumido</h3>
       <table className="grupos">
         <thead>
-          <tr><th>Insumo</th><th>Teórico</th><th>Consumido</th><th>Δ</th><th>Estado</th><th>Base</th></tr>
+          <tr><th>Insumo</th><th>Teórico</th><th>Consumido (frente)</th><th>Retirado (período)</th><th>Δ</th><th>Estado</th><th>Base</th></tr>
         </thead>
         <tbody>
           {reglas.map((r) => (
@@ -104,6 +104,7 @@ export default function ResultsView({ resultado }) {
               <td>{r.insumo}</td>
               <td>{n(r.teorico)}</td>
               <td>{r.consumido ? n(r.consumido) : '—'}</td>
+              <td><strong>{r.retirado ? n(r.retirado) : '—'}</strong></td>
               <td>{r.deltaPct == null ? '—' : `${r.deltaPct > 0 ? '+' : ''}${r.deltaPct.toFixed(0)}%`}</td>
               <td><Badge estado={r.estado} /></td>
               <td className="muted-cell">{r.base}</td>
@@ -113,7 +114,9 @@ export default function ResultsView({ resultado }) {
       </table>
       <p className="nota">
         Cada 25 m² de baldosa → 1 bolsón arena, 6 bolsas cemento, 6 bolsas cal.
-        Cada 25 m² de solado/acera → 1 volquete. Arena/cemento/cal salen de Supabase (por frente); volquetes del Excel de control.
+        Volquete = total m² ejecutado ÷ 25.
+        <strong> "Consumido"</strong> = matcheado por frente (obs); <strong>"Retirado"</strong> = total del período del JO.
+        El estado se calcula sobre el retirado (más completo).
       </p>
 
       {/* ── Baldosas por subtipo ── */}

@@ -66,7 +66,8 @@ export function exportarResumen(res) {
         res.reglas.map((r) => ({
           Insumo: r.insumo,
           Teórico: r1(r.teorico),
-          Consumido: r1(r.consumido),
+          'Consumido (frente)': r1(r.consumido),
+          'Retirado (período)': r1(r.retirado),
           'Δ %': r.deltaPct == null ? '' : Math.round(r.deltaPct),
           Estado: ESTADO_TXT[r.estado] || r.estado,
           Base: r.base,
