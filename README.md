@@ -1,242 +1,88 @@
 # 🔍 Verificador de Consumos por Frente
 
-Web para validar que los frentes ejecutados por jefes de obra coincidan con:
-1. Las especificaciones del certificado de obra
-2. Los consumos reales registrados en Supabase
+Web para cruzar, por **jefe de obra** y **período**, lo que cada JO **ejecutó** y lo que el
+**certificado** especifica contra los **consumos reales** (Excel de hormigón/volquetes/asfalto +
+pañol en Supabase).
 
 ---
 
-## 🚀 Instalación y Uso
+## 🚀 Puesta en marcha
 
-### Instalar dependencias
 ```bash
 npm install
+cp .env.example .env.local   # completá las credenciales de Supabase
+npm run dev                  # http://localhost:5173
+npm run build                # build de producción en dist/
 ```
 
-### Ejecutar en desarrollo
-```bash
-npm run dev
-```
-
-Luego abre [http://localhost:5173](http://localhost:5173) en tu navegador.
-
-### Build para producción
-```bash
-npm run build
-```
-
----
-
-## 📋 Estructura Esperada de los 3 Excel
-
-### 1️⃣ EJECUTADO.xlsx — Frentes Ejecutados
-
-**Hoja requerida:** Cualquiera que contenga "FRENTES" en el nombre  
-Ejemplo: `P.F FRENTES`, `S.A FRENTES`, `S.C FRENTES`
-
-**Columnas requeridas:**
-| Columna | Tipo | Ejemplo |
-|---------|------|---------|
-| **Calle** | Texto | `ALVAREZ JONTE AV.` |
-| **Altura** | Número | `2621` |
-| **M2 EJECUTADOS** | Número decimal | `123.45` |
-| **Estado** | Texto | `Completado` |
-| **Intervención** | Texto | `Veredas` |
-| **MATERIALIDAD** | Texto | `Baldosa + Hormigón` |
-
-**Nota:** **Calle + Altura** es la clave para matchear con certificado y Supabase.
-
----
-
-### 2️⃣ Reporte de Certificado.xlsx — Especificaciones
-
-**Hoja requerida:** Cualquiera con "cert" en el nombre (ej: `cert`), o primera hoja si no existe
-
-**Columnas requeridas:**
-| Columna | Tipo | Ejemplo |
-|---------|------|---------|
-| **Texto Breve de Orden** | Texto | `ALVAREZ JONTE AV. 2621` |
-| **Descripcion Operación** | Texto | `Hormigón H17 de 8cm espesor` |
-| **Cantidad Realizada** | Número decimal | `38.2` |
-| **N° de Orden** | Número | `5519672` |
-
-**Importante:** El **"Texto Breve de Orden"** DEBE contener **Calle + Altura** para poder matchear con EJECUTADO.xlsx.
-
----
-
-### 3️⃣ CONTROL DE HORMIGON, VOLQUETES... (Opcional)
-
-**Nota:** Este archivo es auxiliar para tu referencia.  
-**La web NO lo carga** — los consumos se obtienen directamente de Supabase.
-
----
-
-## 🔄 Flujo de Uso
+### Credenciales (Supabase)
+Las claves NO van en el código. Copiá `.env.example` a `.env.local`:
 
 ```
-1️⃣ Carga EJECUTADO.xlsx
-        ↓
-2️⃣ Carga Certificado.xlsx
-        ↓
-3️⃣ Ingresa Jefe de Obra
-        ↓
-4️⃣ [Consultar Supabase & Comparar]
-        ↓
-5️⃣ Ver Resultados
-   - Frentes validados ✓
-   - Discrepancias ⚠️
-   - Consumos por item
+VITE_SUPABASE_URL=https://TU-PROYECTO.supabase.co
+VITE_SUPABASE_ANON_KEY=tu-anon-key
 ```
 
-### Paso a Paso
-
-1. **Sube EJECUTADO.xlsx**
-   - La web detecta automáticamente la hoja con "FRENTES"
-   - Muestra cantidad de frentes cargados
-
-2. **Sube Reporte de Certificado.xlsx**
-   - Busca hoja "cert" (o usa la primera disponible)
-   - Muestra cantidad de líneas/ítems cargados
-
-3. **Selecciona Jefe de Obra**
-   - Ingresa el nombre exacto como está en Supabase
-   - Ejemplo: `Pablo Franciscono`, `Sergio Arena`, etc.
-   - ⚠️ **Importante:** El nombre debe coincidir exactamente con `remitos.jefe_obra`
-
-4. **Consulta Supabase & Compara**
-   - Web obtiene remitos de ese jefe (tabla `remitos`)
-   - Obtiene ítems consumidos (tabla `remito_items`)
-   - **Matchea frentes** por Calle + Altura
-   - **Compara cantidades** con ±15% de tolerancia
-
-5. **Visualiza Resultados**
-   - **Resumen:** Total de frentes, discrepancias encontradas
-   - **Detalle por frente:** 
-     - ✓ Validaciones correctas (items que coinciden)
-     - ⚠️ Discrepancias (cantidades que no coinciden)
-   - **Tablas:** Certificado vs Consumido (Supabase)
+En Cloudflare Pages, cargá esas dos variables en *Settings → Environment variables*.
 
 ---
 
-## ✅ Validaciones Implementadas
+## 📥 Qué se carga
 
-### Matcheo de Ubicaciones
-- **Exacto:** Calle + Altura idénticos
-- **Por proximidad:** Calle + Altura ±50m
+| # | Archivo | Aporta |
+|---|---------|--------|
+| 1 | **EJECUTADO.xlsx** | Frentes por jefe de obra *(requiere columna "Jefe de Obra")* |
+| 2 | **CONTROL DE HORMIGON...xlsx** | Consumos de hormigón / volquetes / asfalto |
+| 3 | **Reporte de Certificado.xlsx** | Especificación de cada frente |
+| — | **Supabase** (automático) | Consumos de pañol: baldosas, hierro, cemento, etc. |
 
-### Comparación de Cantidades
-- **Tolerancia:** ±15% (configurable)
-- **Mostrar:** Diferencia porcentual
-
-### Reportes
-- ✓ Items que coinciden (validaciones correctas)
-- ⚠️ Items con discrepancia (diferencia >15%)
-- ❌ Items faltantes en Supabase
+👉 Estructura detallada de columnas: [`.planning/ESTRUCTURA_EXCELS.md`](.planning/ESTRUCTURA_EXCELS.md)
 
 ---
 
-## 🗄️ Tablas Supabase Utilizadas
+## 🔄 Flujo
 
-### `remitos`
-Cabecera de remitos. Campos importantes:
-- `id` — ID único
-- `jefe_obra` — Nombre del jefe (DEBE coincidir exactamente)
-- `tipo` — RETIRO, INGRESO, etc. (filtramos RETIRO)
-- `obs` — Observaciones (contiene calle/altura del frente)
-- `fecha` — Fecha del movimiento
-
-### `remito_items`
-Items/líneas de cada remito. Campos:
-- `remito_id` — Referencia al remito
-- `item_nombre` — Nombre del material
-- `item_unidad` — Unidad (m³, unid, m², kg, etc.)
-- `cantidad` — Cantidad consumida
+1. Cargás los 3 Excel.
+2. Elegís **jefe de obra** + **rango de fechas**.
+3. *Verificar consumos* → trae pañol de Supabase (filtrado por JO + fechas) y cruza todo por frente.
+4. Ves, por frente: **Certificado vs Consumido** por material, con estado (OK / Exceso / Falta / etc.),
+   totales del período y los consumos que no cayeron en ningún frente.
 
 ---
 
-## 🛠️ Stack Técnico
+## 🧱 Arquitectura del código
 
-- **Frontend:** React 18 + Vite 5
-- **Backend:** Supabase (PostgreSQL)
-- **Parsing:** XLSX (lectura de Excel)
-- **Estilos:** CSS vanilla (responsive)
-
----
-
-## 📝 Notas Importantes
-
-### 1. Clave de Matching: Calle + Altura
 ```
-EJECUTADO.xlsx:
-  Calle: "ALVAREZ JONTE AV." + Altura: 2621
-
-Certificado.xlsx:
-  "Texto Breve de Orden": "ALVAREZ JONTE AV. 2621"
-
-Supabase (remitos.obs):
-  "ALVAREZ JONTE AV. 2621"  ← extraído de observación
-```
-
-### 2. Tolerancia en Comparaciones
-- Certificado: 100 M³
-- Consumido: 85-115 M³ ✓ (dentro de ±15%)
-- Consumido: 70 M³ ❌ (fuera de rango)
-
-Configurable en código: `compareWithTolerance(..., 0.15)`
-
-### 3. Nombres de Jefes
-- ⚠️ **Sensible a mayúsculas/minúsculas**
-- `Pablo Franciscono` ≠ `pablo franciscono`
-- Verifica el nombre exacto en Supabase antes
-
-### 4. Formato de Calle + Altura
-Espera formato: `CALLE NOMBRE [NUMERO]`
-- ✓ `ALVAREZ JONTE AV. 2621`
-- ✓ `CAMPANA 3751`
-- ✓ `CESAR DIAZ 3176`
-
----
-
-## 🐛 Troubleshooting
-
-| Problema | Solución |
-|----------|----------|
-| "No se encontró hoja FRENTES" | Verifica que tu Excel tenga una hoja con "FRENTES" en el nombre |
-| "No hay remitos registrados para..." | El jefe no existe en Supabase o no tiene remitos RETIRO |
-| "No hay datos de consumo en Supabase" | El frente no se encontró. Verifica que Calle+Altura coincidan |
-| Cantidades no coinciden | Revisa tolerancia (15%) o verifica datos en Supabase |
-| Items muestran como consumo 0 | Ese item no está registrado en Supabase para ese jefe |
-
----
-
-## 📦 Producción
-
-Para desplegar en producción (Cloudflare Pages, Vercel, Netlify, etc.):
-
-```bash
-npm run build
-# Archivos listos en ./dist/
-```
-
-### Cloudflare Pages
-```bash
-# Conecta tu repo a Cloudflare Pages
-# Build command: npm run build
-# Build output directory: dist
+src/
+├── config/supabase.js        Cliente Supabase (lee credenciales de .env)
+├── lib/
+│   ├── normalize.js          Normalización, direcciones, fechas, matcheo por proximidad
+│   ├── parseExcel.js         Parsers de los 3 Excel
+│   ├── itemMapping.js        Diccionario de grupos canónicos de material  ← AJUSTAR ACÁ
+│   ├── supabaseData.js       Consulta de consumos de pañol (RETIRO − DEVOLUCION)
+│   └── verify.js             Motor de verificación (cruce por frente)
+├── components/
+│   ├── UploadPanel.jsx       Carga de los 3 archivos
+│   ├── FilterBar.jsx         JO + rango de fechas
+│   └── ResultsView.jsx       Resultado por frente
+└── App.jsx                   Orquestador
 ```
 
 ---
 
-## 🔐 Seguridad
+## ⚙️ Ajustes frecuentes
 
-**Nota:** Las credenciales de Supabase están hardcodeadas en el código (lado cliente).  
-Esto es aceptable para lectura únicamente si:
-- La clave es ANON_KEY (solo lectura)
-- Las políticas RLS de Supabase restringen acceso
-
-Para mayor seguridad en producción: usar un backend proxy.
+- **Material que no matchea:** agregá una regla en [`src/lib/itemMapping.js`](src/lib/itemMapping.js).
+- **Tolerancia de comparación:** `TOLERANCIA` en [`src/lib/verify.js`](src/lib/verify.js) (default 15%).
+- **Proximidad de altura:** `toleranciaAltura` en [`src/lib/normalize.js`](src/lib/normalize.js) (default 50).
 
 ---
 
-**Última actualización:** 2026-07-20  
-**Versión:** 1.0.0
+## ☁️ Deploy
+
+Ver [`DEPLOY.md`](DEPLOY.md). Resumen: push a GitHub → conectar en Cloudflare Pages con
+build `npm run build`, output `dist`, y las 2 variables de entorno de Supabase.
+
+---
+
+*Stack: React 18 · Vite 5 · Supabase · SheetJS (xlsx). Última actualización: 2026-07-20.*

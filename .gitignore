@@ -27,3 +27,14 @@ dist-ssr
 .env
 .env.local
 .env.*.local
+
+# Datos reales del negocio — NO subir (privados)
+ejemplos-excel/
+capturas-supabase/
+*.xlsx
+*.xls
+*.XLSX
+*.XLS
+
+# Script de prueba manual (depende de datos privados)
+_test-logic.mjs
