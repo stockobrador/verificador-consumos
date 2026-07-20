@@ -1,6 +1,20 @@
 // Utilidades de normalización, direcciones y fechas.
 // Todo el matcheo entre archivos y Supabase pasa por acá.
 
+// Limpia mojibake típico de Excel mal codificado (Latin-1 leído como UTF-8).
+// "Contrapisos HÂº H17" -> "Contrapisos H° H17" ; "caÃ±os" -> "caños".
+const MOJIBAKE = [
+  [/HÂ[º°]/g, 'H°'], [/Â°/g, '°'], [/Âº/g, 'º'],
+  [/Ã±/g, 'ñ'], [/Ã‘/g, 'Ñ'], [/Ã˜/g, 'Ø'], [/Ã˜/g, 'Ø'],
+  [/Ã©/g, 'é'], [/Ã³/g, 'ó'], [/Ã¡/g, 'á'], [/Ã­/g, 'í'], [/Ãº/g, 'ú'], [/Ã¼/g, 'ü'],
+  [/Â/g, ''], // Â sobrante
+]
+export function limpiarTexto(str) {
+  let s = String(str ?? '')
+  for (const [re, rep] of MOJIBAKE) s = s.replace(re, rep)
+  return s.replace(/\s+/g, ' ').trim()
+}
+
 // Normaliza texto: minúsculas, sin acentos, espacios colapsados.
 export function norm(str) {
   if (str == null) return ''

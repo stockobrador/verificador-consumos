@@ -1,5 +1,5 @@
 import * as XLSX from 'xlsx'
-import { excelDateToJS, norm } from './normalize.js'
+import { excelDateToJS, norm, limpiarTexto } from './normalize.js'
 
 // Lee un File del navegador y devuelve el workbook de XLSX.
 export function readWorkbook(file) {
@@ -113,8 +113,8 @@ export function parseCertificado(workbook) {
 
     items.push({
       orden: String(pick(row, 'N° de Orden', 'Nro de Orden') || '').trim(),
-      ubicacion: String(ubicacion).trim(), // contiene calle + altura
-      descripcion: String(descripcion).trim(),
+      ubicacion: limpiarTexto(ubicacion), // contiene calle + altura
+      descripcion: limpiarTexto(descripcion),
       cantidad: parseFloat(pick(row, 'Cantidad Realizada', 'Cantidad')) || 0,
       status: String(pick(row, 'Status Usuario Orden', 'Status') || '').trim(),
     })

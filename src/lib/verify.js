@@ -1,11 +1,5 @@
 import { mismasDirecciones, fechaEnRango } from './normalize.js'
-import {
-  parseOperacion,
-  etiquetaOperacion,
-  claveOperacion,
-  m3Teorico,
-  baldosaTipo,
-} from './certOps.js'
+import { parseOperacion, m3Teorico, baldosaTipo } from './certOps.js'
 
 const TOLERANCIA = 0.15 // ±15%
 
@@ -39,6 +33,8 @@ export function buildResumen({ frentes, consumosHormigon, certificado, panol, jo
   const matcheaFrente = (dir) => textosFrentes.some((t) => mismasDirecciones(dir, t))
 
   // ── 1. Certificado agregado sobre los frentes del JO ──────────────────
+  // Se agrupa por la DESCRIPCIÓN REAL de la operación (no por buckets), para
+  // que cada tipo del certificado se vea tal cual y sumado.
   const opsMap = {}
   const baldCert = {} // subtipo -> { total m² }
   const frentesCertificados = new Set()
@@ -47,11 +43,11 @@ export function buildResumen({ frentes, consumosHormigon, certificado, panol, jo
     if (!matcheaFrente(row.ubicacion)) continue
     frentesCertificados.add(row.ubicacion)
 
-    const op = parseOperacion(row.descripcion)
-    const clave = claveOperacion(op)
-    if (!opsMap[clave]) {
-      opsMap[clave] = {
-        label: etiquetaOperacion(op),
+    const desc = row.descripcion
+    if (!opsMap[desc]) {
+      const op = parseOperacion(desc)
+      opsMap[desc] = {
+        label: desc,
         trabajo: op.trabajo,
         material: op.material,
         espesor: op.espesor,
@@ -59,11 +55,11 @@ export function buildResumen({ frentes, consumosHormigon, certificado, panol, jo
         m2: 0,
       }
     }
-    opsMap[clave].m2 += row.cantidad
+    opsMap[desc].m2 += row.cantidad
 
     // Baldosas del certificado por subtipo
-    if (op.trabajo === 'solado') {
-      const b = baldosaTipo(row.descripcion)
+    if (opsMap[desc].trabajo === 'solado') {
+      const b = baldosaTipo(desc)
       if (b) acum(baldCert, b.key, row.cantidad, { label: b.label })
     }
   }
